@@ -41,3 +41,12 @@ class DatabaseManager:
                 entry.updated_at
             ))
             conn.commit()
+
+    def get_all_credentials(self):
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, name, url, username, password, notes, updated_at
+                FROM passwords
+            """)
+            return cursor.fetchall()
