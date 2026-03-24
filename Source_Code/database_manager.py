@@ -48,5 +48,42 @@ class DatabaseManager:
             cursor.execute("""
                 SELECT id, name, url, username, password, notes, updated_at
                 FROM passwords
+                ORDER BY id
             """)
             return cursor.fetchall()
+
+    def get_credential_by_id(self, entry_id: int):
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, name, url, username, password, notes, updated_at
+                FROM passwords
+                WHERE id = ?
+            """, (entry_id,))
+            return cursor.fetchone()
+
+    def update_credential(self, entry_id: int, entry: PasswordEntry) -> bool:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE passwords
+                SET name = ?, url = ?, username = ?, password = ?, notes = ?, updated_at = ?
+                WHERE id = ?
+            """, (
+                entry.name,
+                entry.url,
+                entry.username,
+                entry.password,
+                entry.notes,
+                entry.updated_at,
+                entry_id
+            ))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def delete_credential(self, entry_id: int) -> bool:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM passwords WHERE id = ?", (entry_id,))
+            conn.commit()
+            return cursor.rowcount > 0
