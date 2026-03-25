@@ -1,3 +1,4 @@
+from getpass import getpass
 from password_vault import PasswordVault
 
 
@@ -8,7 +9,8 @@ def print_menu():
     print("3. Edit credential")
     print("4. Delete credential")
     print("5. Change master password")
-    print("6. Exit")
+    print("6. Generate strong password")
+    print("7. Exit")
 
 
 def read_non_empty_input(label):
@@ -16,6 +18,14 @@ def read_non_empty_input(label):
     while not value:
         print("This field cannot be empty.")
         value = input(label).strip()
+    return value
+
+
+def read_non_empty_hidden_input(label):
+    value = getpass(label).strip()
+    while not value:
+        print("This field cannot be empty.")
+        value = getpass(label).strip()
     return value
 
 
@@ -31,14 +41,34 @@ def read_entry_id():
         print("Please enter a valid positive number.")
 
 
+def read_password_length():
+    raw_value = input("Password length [12]: ").strip()
+    if raw_value == "":
+        return 12
+    if raw_value.isdigit() and int(raw_value) >= 8:
+        return int(raw_value)
+    print("Invalid length. Using default length 12.")
+    return 12
+
+
+def ask_for_generated_password(vault: PasswordVault):
+    choice = input("Do you want the system to generate a strong password? (y/n): ").strip().lower()
+    if choice == "y":
+        length = read_password_length()
+        generated_password = vault.generate_password(length)
+        print(f"Generated password: {generated_password}")
+        return generated_password
+    return read_non_empty_input("Password: ")
+
+
 def setup_or_unlock_vault(vault: PasswordVault):
     if not vault.is_master_password_set():
         print("No master password found.")
         print("Create a master password to secure the vault.")
 
         while True:
-            password = read_non_empty_input("New master password: ")
-            confirm_password = read_non_empty_input("Confirm master password: ")
+            password = read_non_empty_hidden_input("New master password: ")
+            confirm_password = read_non_empty_hidden_input("Confirm master password: ")
 
             if password != confirm_password:
                 print("Passwords do not match.")
@@ -51,7 +81,7 @@ def setup_or_unlock_vault(vault: PasswordVault):
     attempts = 5
 
     while attempts > 0:
-        password = read_non_empty_input("Enter master password: ")
+        password = read_non_empty_hidden_input("Enter master password: ")
 
         if vault.unlock_vault(password):
             print("Vault unlocked successfully.")
@@ -79,8 +109,8 @@ def setup_or_unlock_vault(vault: PasswordVault):
     print("Vault formatted successfully.")
 
     while True:
-        password = read_non_empty_input("New master password: ")
-        confirm_password = read_non_empty_input("Confirm master password: ")
+        password = read_non_empty_hidden_input("New master password: ")
+        confirm_password = read_non_empty_hidden_input("Confirm master password: ")
 
         if password != confirm_password:
             print("Passwords do not match.")
@@ -96,7 +126,7 @@ def add_credential_cli(vault: PasswordVault):
     name = read_non_empty_input("Name: ")
     url = read_optional_input("URL: ")
     username = read_non_empty_input("Username: ")
-    password = read_non_empty_input("Password: ")
+    password = ask_for_generated_password(vault)
     notes = read_optional_input("Notes: ")
 
     try:
@@ -139,7 +169,15 @@ def edit_credential_cli(vault: PasswordVault):
     name = input(f"Name [{existing_entry['name']}]: ").strip() or existing_entry["name"]
     url = input(f"URL [{existing_entry['url']}]: ").strip() or existing_entry["url"]
     username = input(f"Username [{existing_entry['username']}]: ").strip() or existing_entry["username"]
-    password = input(f"Password [{existing_entry['password']}]: ").strip() or existing_entry["password"]
+
+    generated_choice = input("Do you want a newly generated strong password? (y/n): ").strip().lower()
+    if generated_choice == "y":
+        length = read_password_length()
+        password = vault.generate_password(length)
+        print(f"Generated password: {password}")
+    else:
+        password = input(f"Password [{existing_entry['password']}]: ").strip() or existing_entry["password"]
+
     notes = input(f"Notes [{existing_entry['notes']}]: ").strip() or existing_entry["notes"]
 
     try:
@@ -179,9 +217,9 @@ def delete_credential_cli(vault: PasswordVault):
 
 def change_master_password_cli(vault: PasswordVault):
     print("\nChange Master Password")
-    old_password = read_non_empty_input("Current master password: ")
-    new_password = read_non_empty_input("New master password: ")
-    confirm_password = read_non_empty_input("Confirm new master password: ")
+    old_password = read_non_empty_hidden_input("Current master password: ")
+    new_password = read_non_empty_hidden_input("New master password: ")
+    confirm_password = read_non_empty_hidden_input("Confirm new master password: ")
 
     if new_password != confirm_password:
         print("Passwords do not match.")
@@ -193,6 +231,17 @@ def change_master_password_cli(vault: PasswordVault):
             print("Master password changed successfully.")
         else:
             print("Current master password is incorrect.")
+    except ValueError as error:
+        print(error)
+
+
+def generate_password_cli(vault: PasswordVault):
+    print("\nGenerate Strong Password")
+    length = read_password_length()
+
+    try:
+        password = vault.generate_password(length)
+        print(f"Generated password: {password}")
     except ValueError as error:
         print(error)
 
@@ -218,10 +267,12 @@ def main():
         elif choice == "5":
             change_master_password_cli(vault)
         elif choice == "6":
+            generate_password_cli(vault)
+        elif choice == "7":
             print("Exiting Password Vault.")
             break
         else:
-            print("Invalid option. Please choose 1-6.")
+            print("Invalid option. Please choose 1-7.")
 
 
 if __name__ == "__main__":

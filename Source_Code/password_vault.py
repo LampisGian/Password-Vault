@@ -2,12 +2,14 @@ from datetime import datetime
 from password_entry import PasswordEntry
 from encryption_manager import EncryptionManager
 from database_manager import DatabaseManager
+from password_generator import PasswordGenerator
 
 
 class PasswordVault:
     def __init__(self):
         self.encryption_manager = EncryptionManager()
         self.database_manager = DatabaseManager()
+        self.password_generator = PasswordGenerator()
 
     def _current_timestamp(self) -> str:
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -57,6 +59,9 @@ class PasswordVault:
     def reset_vault(self):
         self.database_manager.delete_database()
         self.encryption_manager.delete_config()
+
+    def generate_password(self, length: int = 12) -> str:
+        return self.password_generator.generate_password(length)
 
     def add_entry(self, name: str, url: str, username: str, password: str, notes: str):
         self._validate_required_text(name, "Name")
