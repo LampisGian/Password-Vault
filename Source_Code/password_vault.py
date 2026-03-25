@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from password_entry import PasswordEntry
 from encryption_manager import EncryptionManager
@@ -59,6 +60,9 @@ class PasswordVault:
     def reset_vault(self):
         self.database_manager.delete_database()
         self.encryption_manager.delete_config()
+
+    def clear_database_only(self):
+        self.database_manager.delete_database()
 
     def generate_password(self, length: int = 12) -> str:
         return self.password_generator.generate_password(length)
@@ -147,3 +151,59 @@ class PasswordVault:
     def delete_entry(self, entry_id: int) -> bool:
         self._validate_entry_id(entry_id)
         return self.database_manager.delete_credential(entry_id)
+
+    def export_backup_to_file(self, file_path: str):
+        entries = self.retrieve_entries()
+
+        payload = {
+            "type": "password_vault_backup",
+            "version": 1,
+            "entries": [
+                {
+                    "name": entry["name"],
+                    "url": entry["url"],
+                    "username": entry["username"],
+                    "password": entry["password"],
+                    "notes": entry["notes"]
+                }
+                for entry in entries
+            ]
+        }
+
+        plain_text = json.dumps(payload, ensure_ascii=False, indent=2)
+        encrypted_text = self.encryption_manager.encrypt_text(plain_text)
+
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(encrypted_text)
+
+    def import_backup_from_file(self, file_path: str):
+        with open(file_path, "r", encoding="utf-8") as file:
+            encrypted_text = file.read().strip()
+
+        if not encrypted_text:
+            raise ValueError("The selected file is empty.")
+
+        plain_text = self.encryption_manager.decrypt_text(encrypted_text)
+
+        try:
+            data = json.loads(plain_text)
+        except json.JSONDecodeError:
+            raise ValueError("Invalid backup file format.")
+
+        if data.get("type") != "password_vault_backup":
+            raise ValueError("Unsupported backup file.")
+
+        entries = data.get("entries", [])
+        imported_count = 0
+
+        for entry in entries:
+            self.add_entry(
+                entry.get("name", ""),
+                entry.get("url", ""),
+                entry.get("username", ""),
+                entry.get("password", ""),
+                entry.get("notes", "")
+            )
+            imported_count += 1
+
+        return imported_count

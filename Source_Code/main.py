@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from password_vault import PasswordVault
 
 
@@ -14,8 +14,52 @@ ACCENT_HOVER = "#0ea5e9"
 SUCCESS = "#22c55e"
 WARNING = "#f59e0b"
 DANGER = "#ef4444"
+DANGER_HOVER = "#dc2626"
 BORDER = "#334155"
 INPUT_BG = "#0f172a"
+
+
+class AppButton(tk.Frame):
+    def __init__(self, parent, text, command, bg, hover_bg, fg="white", width=120, height=40):
+        super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, bd=0)
+        self.command = command
+        self.bg_color = bg
+        self.hover_color = hover_bg
+        self.fg_color = fg
+        self.width = width
+        self.height = height
+
+        self.label = tk.Label(
+            self,
+            text=text,
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Helvetica", 10, "bold"),
+            cursor="hand2",
+            bd=0,
+            relief="flat"
+        )
+        self.label.pack(fill="both", expand=True)
+
+        self.configure(width=self.width, height=self.height)
+        self.pack_propagate(False)
+
+        self.label.bind("<Enter>", self._on_enter)
+        self.label.bind("<Leave>", self._on_leave)
+        self.label.bind("<Button-1>", self._on_click)
+        self.bind("<Enter>", self._on_enter)
+        self.bind("<Leave>", self._on_leave)
+        self.bind("<Button-1>", self._on_click)
+
+    def _on_enter(self, event=None):
+        self.label.configure(bg=self.hover_color)
+
+    def _on_leave(self, event=None):
+        self.label.configure(bg=self.bg_color)
+
+    def _on_click(self, event=None):
+        if self.command:
+            self.command()
 
 
 class PasswordVaultApp:
@@ -60,7 +104,7 @@ class PasswordVaultApp:
             background=SURFACE,
             foreground=TEXT,
             fieldbackground=SURFACE,
-            rowheight=34,
+            rowheight=36,
             borderwidth=0,
             font=("Helvetica", 11)
         )
@@ -91,13 +135,6 @@ class PasswordVaultApp:
         self.overlay = tk.Frame(self.root, bg="#000000")
         self.overlay.place_forget()
 
-        self.overlay_card = tk.Frame(
-            self.overlay,
-            bg=CARD,
-            highlightthickness=1,
-            highlightbackground=BORDER
-        )
-
         self.modal_done = tk.StringVar(value="")
         self.modal_result = None
         self.modal_inputs = []
@@ -111,7 +148,7 @@ class PasswordVaultApp:
             widget.destroy()
         self.overlay.place_forget()
 
-    def _center_overlay_card(self, width=460):
+    def _center_overlay_card(self, width=480):
         self.overlay_card = tk.Frame(
             self.overlay,
             bg=CARD,
@@ -141,6 +178,15 @@ class PasswordVaultApp:
         ).pack(anchor="w", pady=(0, 10))
 
         return body
+
+    def _make_small_button(self, parent, text, command, width=110):
+        return AppButton(parent, text, command, CARD_2, "#334155", TEXT, width=width, height=40)
+
+    def _make_primary_button(self, parent, text, command, width=110):
+        return AppButton(parent, text, command, ACCENT_HOVER, ACCENT, "white", width=width, height=40)
+
+    def _make_danger_button(self, parent, text, command, width=110):
+        return AppButton(parent, text, command, DANGER, DANGER_HOVER, "white", width=width, height=40)
 
     def notify(self, title, message, kind="info"):
         color = ACCENT
@@ -202,39 +248,14 @@ class PasswordVaultApp:
             fg=MUTED,
             font=("Helvetica", 11),
             justify="left",
-            wraplength=380
+            wraplength=390
         ).pack(anchor="w")
 
         button_row = tk.Frame(body, bg=CARD)
         button_row.pack(fill="x", pady=(20, 0))
 
-        tk.Button(
-            button_row,
-            text="Cancel",
-            bg=CARD_2,
-            fg=TEXT,
-            activebackground="#334155",
-            activeforeground=TEXT,
-            relief="flat",
-            padx=18,
-            pady=10,
-            bd=0,
-            command=lambda: self._complete_modal(False)
-        ).pack(side="right", padx=(8, 0))
-
-        tk.Button(
-            button_row,
-            text="Confirm",
-            bg=DANGER if kind == "warning" else ACCENT_HOVER,
-            fg="white",
-            activebackground="#dc2626" if kind == "warning" else ACCENT,
-            activeforeground="white",
-            relief="flat",
-            padx=18,
-            pady=10,
-            bd=0,
-            command=lambda: self._complete_modal(True)
-        ).pack(side="right")
+        self._make_small_button(button_row, "Cancel", lambda: self._complete_modal(False), width=100).pack(side="right", padx=(8, 0))
+        self._make_danger_button(button_row, "Confirm", lambda: self._complete_modal(True), width=100).pack(side="right")
 
         self.root.wait_variable(self.modal_done)
         return self.modal_result
@@ -250,6 +271,8 @@ class PasswordVaultApp:
 
         form = tk.Frame(body, bg=CARD)
         form.pack(fill="both", expand=True)
+
+        focused_entry = None
 
         for field in fields:
             row = tk.Frame(form, bg=CARD)
@@ -286,40 +309,23 @@ class PasswordVaultApp:
                 entry.configure(state="readonly")
 
             if field.get("focus", False):
-                entry.focus_set()
+                focused_entry = entry
 
             self.modal_inputs.append(var)
 
         button_row = tk.Frame(body, bg=CARD)
         button_row.pack(fill="x", pady=(18, 0))
 
-        tk.Button(
+        self._make_small_button(button_row, "Cancel", lambda: self._complete_modal(None), width=100).pack(side="right", padx=(8, 0))
+        self._make_primary_button(
             button_row,
-            text="Cancel",
-            bg=CARD_2,
-            fg=TEXT,
-            activebackground="#334155",
-            activeforeground=TEXT,
-            relief="flat",
-            padx=18,
-            pady=10,
-            bd=0,
-            command=lambda: self._complete_modal(None)
-        ).pack(side="right", padx=(8, 0))
-
-        tk.Button(
-            button_row,
-            text=submit_text,
-            bg=ACCENT_HOVER,
-            fg="white",
-            activebackground=ACCENT,
-            activeforeground="white",
-            relief="flat",
-            padx=18,
-            pady=10,
-            bd=0,
-            command=lambda: self._complete_modal([v.get().strip() for v in self.modal_inputs])
+            submit_text,
+            lambda: self._complete_modal([v.get().strip() for v in self.modal_inputs]),
+            width=100
         ).pack(side="right")
+
+        if focused_entry is not None:
+            focused_entry.focus_set()
 
         self.root.wait_variable(self.modal_done)
         return self.modal_result
@@ -457,19 +463,8 @@ class PasswordVaultApp:
 
         self._make_entry(parent, variable).grid(row=row, column=1, sticky="ew", pady=12)
 
-        tk.Button(
-            parent,
-            text="Update",
-            bg=CARD_2,
-            fg=TEXT,
-            activebackground="#334155",
-            activeforeground=TEXT,
-            relief="flat",
-            padx=14,
-            pady=8,
-            bd=0,
-            command=command
-        ).grid(row=row, column=2, padx=(12, 0), pady=12)
+        update_button = self._make_small_button(parent, "Update", command, width=100)
+        update_button.grid(row=row, column=2, padx=(12, 0), pady=12, sticky="e")
 
     def _build_ui(self):
         shell = tk.Frame(self.root, bg=BG)
@@ -514,75 +509,11 @@ class PasswordVaultApp:
         )
         search_entry.pack(fill="x", padx=12, pady=10)
 
-        tk.Button(
-            toolbar,
-            text="Search",
-            bg=ACCENT_HOVER,
-            fg="white",
-            activebackground=ACCENT,
-            activeforeground="white",
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.search_entries
-        ).pack(side="left", padx=(0, 8))
-
-        tk.Button(
-            toolbar,
-            text="Show All",
-            bg=CARD_2,
-            fg=TEXT,
-            activebackground="#334155",
-            activeforeground=TEXT,
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.refresh_entries
-        ).pack(side="left", padx=(0, 8))
-
-        tk.Button(
-            toolbar,
-            text="+ Add",
-            bg=ACCENT_HOVER,
-            fg="white",
-            activebackground=ACCENT,
-            activeforeground="white",
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.open_add_overlay
-        ).pack(side="left", padx=(0, 8))
-
-        tk.Button(
-            toolbar,
-            text="Delete",
-            bg=DANGER,
-            fg="white",
-            activebackground="#dc2626",
-            activeforeground="white",
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.delete_selected_entry
-        ).pack(side="left", padx=(0, 8))
-
-        tk.Button(
-            toolbar,
-            text="Change Master Password",
-            bg=CARD_2,
-            fg=TEXT,
-            activebackground="#334155",
-            activeforeground=TEXT,
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.change_master_password
-        ).pack(side="right")
+        self._make_primary_button(toolbar, "Search", self.search_entries, width=105).pack(side="left", padx=(0, 8))
+        self._make_small_button(toolbar, "Show All", self.refresh_entries, width=105).pack(side="left", padx=(0, 8))
+        self._make_primary_button(toolbar, "+ Add", self.open_add_overlay, width=105).pack(side="left", padx=(0, 8))
+        self._make_danger_button(toolbar, "Delete", self.delete_selected_entry, width=105).pack(side="left", padx=(0, 8))
+        self._make_small_button(toolbar, "Settings", self.open_settings_window, width=105).pack(side="right")
 
         content = tk.Frame(shell, bg=BG)
         content.pack(fill="both", expand=True)
@@ -591,8 +522,8 @@ class PasswordVaultApp:
         left_card.pack(side="left", fill="both", expand=False, padx=(0, 10))
         left_card.configure(width=420)
 
-        right_card = tk.Frame(content, bg=CARD, highlightthickness=1, highlightbackground=BORDER)
-        right_card.pack(side="left", fill="both", expand=True)
+        center_card = tk.Frame(content, bg=CARD, highlightthickness=1, highlightbackground=BORDER)
+        center_card.pack(side="left", fill="both", expand=True)
 
         left_header = tk.Frame(left_card, bg=CARD, padx=16, pady=14)
         left_header.pack(fill="x")
@@ -621,7 +552,7 @@ class PasswordVaultApp:
         self.tree.heading("name", text="Site / Name")
         self.tree.heading("username", text="Username")
         self.tree.column("id", width=60, anchor="center")
-        self.tree.column("name", width=180, anchor="w")
+        self.tree.column("name", width=185, anchor="w")
         self.tree.column("username", width=150, anchor="w")
 
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
@@ -632,11 +563,11 @@ class PasswordVaultApp:
 
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
 
-        right_header = tk.Frame(right_card, bg=CARD, padx=20, pady=16)
-        right_header.pack(fill="x")
+        center_header = tk.Frame(center_card, bg=CARD, padx=20, pady=16)
+        center_header.pack(fill="x")
 
         tk.Label(
-            right_header,
+            center_header,
             text="Credential Details",
             bg=CARD,
             fg=TEXT,
@@ -644,14 +575,14 @@ class PasswordVaultApp:
         ).pack(anchor="w")
 
         tk.Label(
-            right_header,
+            center_header,
             text="Edit any field and save changes instantly",
             bg=CARD,
             fg=MUTED,
             font=("Helvetica", 10)
         ).pack(anchor="w", pady=(4, 0))
 
-        detail_body = tk.Frame(right_card, bg=CARD, padx=20, pady=8)
+        detail_body = tk.Frame(center_card, bg=CARD, padx=20, pady=8)
         detail_body.pack(fill="both", expand=True)
 
         self._build_detail_row(detail_body, 0, "Name", self.name_var, self.update_name)
@@ -683,18 +614,11 @@ class PasswordVaultApp:
         action_row = tk.Frame(detail_body, bg=CARD)
         action_row.grid(row=6, column=1, sticky="w", pady=(10, 0))
 
-        tk.Button(
+        self._make_primary_button(
             action_row,
-            text="Generate New Password",
-            bg=ACCENT_HOVER,
-            fg="white",
-            activebackground=ACCENT,
-            activeforeground="white",
-            relief="flat",
-            padx=16,
-            pady=9,
-            bd=0,
-            command=self.generate_password_for_selected
+            "Generate New Password",
+            self.generate_password_for_selected,
+            width=180
         ).pack(side="left", padx=(0, 10))
 
         detail_body.columnconfigure(1, weight=1)
@@ -709,6 +633,106 @@ class PasswordVaultApp:
             fg=MUTED,
             font=("Helvetica", 10)
         ).pack(anchor="w")
+
+    def open_settings_window(self):
+        settings_window = tk.Toplevel(self.root)
+        settings_window.title("Settings")
+        settings_window.geometry("560x420")
+        settings_window.resizable(False, False)
+        settings_window.configure(bg=BG)
+        settings_window.transient(self.root)
+
+        outer = tk.Frame(settings_window, bg=BG, padx=18, pady=18)
+        outer.pack(fill="both", expand=True)
+
+        card = tk.Frame(outer, bg=CARD, highlightthickness=1, highlightbackground=BORDER)
+        card.pack(fill="both", expand=True)
+
+        header = tk.Frame(card, bg=CARD, padx=18, pady=16)
+        header.pack(fill="x")
+
+        tk.Label(
+            header,
+            text="Settings",
+            bg=CARD,
+            fg=TEXT,
+            font=("Helvetica", 18, "bold")
+        ).pack(anchor="w")
+
+        tk.Label(
+            header,
+            text="Backup, security and maintenance options",
+            bg=CARD,
+            fg=MUTED,
+            font=("Helvetica", 10)
+        ).pack(anchor="w", pady=(4, 0))
+
+        body = tk.Frame(card, bg=CARD, padx=18, pady=8)
+        body.pack(fill="both", expand=True)
+
+        self._build_settings_action(
+            body,
+            "Export Backup",
+            "Save all credentials to an encrypted .txt backup file.",
+            lambda: self.export_backup_from_settings(settings_window),
+            "primary"
+        )
+
+        self._build_settings_action(
+            body,
+            "Import Backup",
+            "Load credentials from an encrypted .txt backup file.",
+            lambda: self.import_backup_from_settings(settings_window),
+            "secondary"
+        )
+
+        self._build_settings_action(
+            body,
+            "Change Master Password",
+            "Re-encrypt the vault with a new master password.",
+            lambda: self.change_master_password_from_settings(settings_window),
+            "secondary"
+        )
+
+        self._build_settings_action(
+            body,
+            "Delete Database",
+            "Remove all stored credentials but keep current vault access.",
+            lambda: self.delete_database_from_settings(settings_window),
+            "danger"
+        )
+
+    def _build_settings_action(self, parent, title, subtitle, command, kind):
+        row = tk.Frame(parent, bg=CARD)
+        row.pack(fill="x", pady=10)
+
+        text_frame = tk.Frame(row, bg=CARD)
+        text_frame.pack(side="left", fill="x", expand=True)
+
+        tk.Label(
+            text_frame,
+            text=title,
+            bg=CARD,
+            fg=TEXT,
+            font=("Helvetica", 11, "bold")
+        ).pack(anchor="w")
+
+        tk.Label(
+            text_frame,
+            text=subtitle,
+            bg=CARD,
+            fg=MUTED,
+            font=("Helvetica", 10)
+        ).pack(anchor="w", pady=(3, 0))
+
+        if kind == "primary":
+            btn = self._make_primary_button(row, title, command, width=150)
+        elif kind == "danger":
+            btn = self._make_danger_button(row, title, command, width=150)
+        else:
+            btn = self._make_small_button(row, title, command, width=150)
+
+        btn.pack(side="right")
 
     def set_status(self, text):
         self.status_var.set(text)
@@ -953,6 +977,97 @@ class PasswordVaultApp:
                 self.notify("Error", "Current master password is incorrect.", kind="error")
         except Exception as error:
             self.notify("Error", str(error), kind="error")
+
+    def delete_database_only(self):
+        confirmed = self.confirm(
+            "Delete Database",
+            "This will permanently delete all stored credentials.\nYour master password configuration will remain.\nDo you want to continue?",
+            kind="warning"
+        )
+
+        if not confirmed:
+            return
+
+        confirm_values = self.ask_fields(
+            "Confirm Delete Database",
+            [{"label": "Type DELETE", "focus": True}],
+            submit_text="Delete",
+            stripe_color=DANGER,
+            width=460
+        )
+
+        if confirm_values is None or confirm_values[0] != "DELETE":
+            self.notify("Cancelled", "Delete database cancelled.", kind="warning")
+            return
+
+        try:
+            self.vault.clear_database_only()
+            self.refresh_entries()
+            self.notify("Deleted", "Database cleared successfully.", kind="success")
+            self.set_status("All credentials were removed from the database.")
+        except Exception as error:
+            self.notify("Error", str(error), kind="error")
+
+    def export_backup(self):
+        file_path = filedialog.asksaveasfilename(
+            parent=self.root,
+            title="Export Encrypted Backup",
+            defaultextension=".txt",
+            filetypes=[("Text Files", "*.txt")]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            self.vault.export_backup_to_file(file_path)
+            self.notify("Success", "Encrypted backup exported successfully.", kind="success")
+            self.set_status(f"Backup exported to {file_path}")
+        except Exception as error:
+            self.notify("Error", str(error), kind="error")
+
+    def import_backup(self):
+        file_path = filedialog.askopenfilename(
+            parent=self.root,
+            title="Import Encrypted Backup",
+            filetypes=[("Text Files", "*.txt")]
+        )
+
+        if not file_path:
+            return
+
+        confirmed = self.confirm(
+            "Import Backup",
+            "The selected encrypted backup will be imported into the current vault.\nDo you want to continue?",
+            kind="warning"
+        )
+
+        if not confirmed:
+            return
+
+        try:
+            imported_count = self.vault.import_backup_from_file(file_path)
+            self.refresh_entries()
+            self.notify("Imported", f"{imported_count} credential(s) imported successfully.", kind="success")
+            self.set_status(f"Imported {imported_count} credential(s) from backup.")
+        except Exception as error:
+            self.notify("Error", str(error), kind="error")
+
+    def export_backup_from_settings(self, window):
+        self.export_backup()
+        window.lift()
+
+    def import_backup_from_settings(self, window):
+        self.import_backup()
+        window.lift()
+
+    def change_master_password_from_settings(self, window):
+        window.destroy()
+        self.change_master_password()
+
+    def delete_database_from_settings(self, window):
+        window.destroy()
+        self.delete_database_only()
 
 
 def main():
