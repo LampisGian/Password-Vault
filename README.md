@@ -10,6 +10,7 @@ PassVault is a secure password manager application that uses encryption and a lo
 - Open the generated **.app** to launch the application directly on macOS
 
 > **Note:** On macOS, the application stores its working files in the **Application Support** directory.  
+
 To load the prepared database, open the following path:
 
  `/Users/<your-username>/Library/Application Support/PassVault`
@@ -21,9 +22,9 @@ To load the prepared database, open the following path:
  into that folder.  
  After that, open the application and it will load the ready-made vault data correctly.
 
-> **Default master password:** `1234`
+**Default master password:** `1234`
 
-> **Security note:** If the master password is entered incorrectly 5 times, the application provides the option to **format the database** and start again from the beginning with a new vault setup.
+**Security note:** If the master password is entered incorrectly 5 times, the application provides the option to **format the database** and start again from the beginning with a new vault setup.
 
 ---
 
