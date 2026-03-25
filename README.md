@@ -1,13 +1,44 @@
 # Password Vault
 
-## Description
-A secure password manager that uses encryption and a local database (`SQLite`) to store credentials securely with GUI. The program can be written in C++ if you're more comfortable working with it
+# Description
+PassVault is a secure password manager application that uses encryption and a local SQLite database to store user credentials safely through a graphical user interface. The system allows users to manage their passwords locally, while protecting sensitive information by encrypting stored passwords instead of saving them in plain text.
 
 ## Getting Started
-1. Clone this repository or download the files.
-2. Install required packages if necessary.
+### 1) macOS app (`.app`)
+- Download **PassVault.zip**
+- Unzip the file
+- Open the generated **.app** to launch the application directly on macOS
 
-Keep in mind that the code must be written in OOP.
+> **Note:** On macOS, the application stores its working files in the **Application Support** directory.  
+> To load the prepared database, open the following path:
+>
+> `/Users/<your-username>/Library/Application Support/PassVault`
+>
+> Then copy the files:
+> - `vault.db`
+> - `master_config.json`
+>
+> into that folder.  
+> After that, open the application and it will load the ready-made vault data correctly.
+
+> **Default master password:** `1234`
+
+> **Security note:** If the master password is entered incorrectly 5 times, the application provides the option to **format the database** and start again from the beginning with a new vault setup.
+
+---
+
+### 2) Run from source (Python)
+- Download (or clone) the full project folder
+- Open a terminal in the project directory
+- Run the GUI script:
+
+```bash
+python main.py
+# or
+python3 main.py
+```
+
+Note: When running from source, make sure the files vault.db and master_config.json are placed inside the project folder so the application can load the prepared database correctly.
 
 ## Tasks
 - Research cryptography or fernet and SQLite. Plan database schema: site, username, password, notes.
