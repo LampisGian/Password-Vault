@@ -38,6 +38,8 @@ python main.py
 python3 main.py
 ```
 
+**Default master password:** `1234`
+
 > **Note:**: When running from source, make sure the files vault.db and master_config.json are placed inside the project folder so the application can load the prepared database correctly.
 
 ## User Interface Overview (Screenshots)
