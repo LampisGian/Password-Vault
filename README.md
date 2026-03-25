@@ -59,3 +59,8 @@ The bottom part of the interface provides a live status area that informs the us
 For destructive actions such as deleting the database or formatting the vault, the interface requires explicit confirmation. In critical cases, the user must manually type a confirmation word such as `DELETE` or `FORMAT`, which reduces the risk of accidental data loss. Finally, the settings window groups together advanced operations such as encrypted backup export and import, changing the master password, and deleting the database, keeping the main interface cleaner and more organized.
 
 ![Screenshot](Screenshots/safedelete.png)
+
+![Screenshot](Screenshots/not.png)
+
+![Screenshot](Screenshots/prog.png)
+
