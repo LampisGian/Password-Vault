@@ -20,6 +20,44 @@ class PasswordVault:
         if not isinstance(entry_id, int) or entry_id <= 0:
             raise ValueError("Invalid entry ID.")
 
+    def is_master_password_set(self) -> bool:
+        return self.encryption_manager.is_master_password_set()
+
+    def set_master_password(self, password: str):
+        self.encryption_manager.setup_master_password(password)
+
+    def unlock_vault(self, password: str) -> bool:
+        return self.encryption_manager.unlock(password)
+
+    def change_master_password(self, old_password: str, new_password: str):
+        if not self.encryption_manager.unlock(old_password):
+            return False
+
+        rows = self.database_manager.get_all_credentials()
+        decrypted_passwords = []
+
+        for row in rows:
+            decrypted_passwords.append({
+                "id": row[0],
+                "password": self.encryption_manager.decrypt_password(row[4])
+            })
+
+        self.encryption_manager.change_master_password_config(new_password)
+
+        for item in decrypted_passwords:
+            new_encrypted_password = self.encryption_manager.encrypt_password(item["password"])
+            self.database_manager.update_encrypted_password(
+                item["id"],
+                new_encrypted_password,
+                self._current_timestamp()
+            )
+
+        return True
+
+    def reset_vault(self):
+        self.database_manager.delete_database()
+        self.encryption_manager.delete_config()
+
     def add_entry(self, name: str, url: str, username: str, password: str, notes: str):
         self._validate_required_text(name, "Name")
         self._validate_required_text(username, "Username")

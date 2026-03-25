@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from password_entry import PasswordEntry
 
@@ -81,9 +82,25 @@ class DatabaseManager:
             conn.commit()
             return cursor.rowcount > 0
 
+    def update_encrypted_password(self, entry_id: int, encrypted_password: str, updated_at: str) -> bool:
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE passwords
+                SET password = ?, updated_at = ?
+                WHERE id = ?
+            """, (encrypted_password, updated_at, entry_id))
+            conn.commit()
+            return cursor.rowcount > 0
+
     def delete_credential(self, entry_id: int) -> bool:
         with self._connect() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM passwords WHERE id = ?", (entry_id,))
             conn.commit()
             return cursor.rowcount > 0
+
+    def delete_database(self):
+        if os.path.exists(self.db_name):
+            os.remove(self.db_name)
+        self._create_table()
