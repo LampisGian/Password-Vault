@@ -10,16 +10,16 @@ PassVault is a secure password manager application that uses encryption and a lo
 - Open the generated **.app** to launch the application directly on macOS
 
 > **Note:** On macOS, the application stores its working files in the **Application Support** directory.  
-> To load the prepared database, open the following path:
->
-> `/Users/<your-username>/Library/Application Support/PassVault`
->
-> Then copy the files:
-> - `vault.db`
-> - `master_config.json`
->
-> into that folder.  
-> After that, open the application and it will load the ready-made vault data correctly.
+To load the prepared database, open the following path:
+
+ `/Users/<your-username>/Library/Application Support/PassVault`
+
+ Then copy the files:
+ - `vault.db`
+ - `master_config.json`
+
+ into that folder.  
+ After that, open the application and it will load the ready-made vault data correctly.
 
 > **Default master password:** `1234`
 
@@ -38,7 +38,7 @@ python main.py
 python3 main.py
 ```
 
-Note: When running from source, make sure the files vault.db and master_config.json are placed inside the project folder so the application can load the prepared database correctly.
+> **Note:**: When running from source, make sure the files vault.db and master_config.json are placed inside the project folder so the application can load the prepared database correctly.
 
 ## Tasks
 - Research cryptography or fernet and SQLite. Plan database schema: site, username, password, notes.
