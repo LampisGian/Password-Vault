@@ -1,15 +1,19 @@
-import json
 from datetime import datetime
 from password_entry import PasswordEntry
 from encryption_manager import EncryptionManager
 from database_manager import DatabaseManager
 from password_generator import PasswordGenerator
 
+#This class serves as the main interface for the password vault application. It integrates the functionality of the 
+# EncryptionManager, DatabaseManager, and PasswordGenerator classes to provide a cohesive experience for managing password entries. 
+# The PasswordVault class provides methods to set up and unlock the vault, add, retrieve, update, and delete password entries, 
+# generate strong passwords, and handle backup and restore operations. It also includes validation for user input to ensure that
+#  required fields are not left empty and that entry IDs are valid when performing updates or deletions.
 
 class PasswordVault:
-    def __init__(self):
-        self.encryption_manager = EncryptionManager()
-        self.database_manager = DatabaseManager()
+    def __init__(self, db_path: str = "vault.db", config_path: str = "master_config.json"):
+        self.encryption_manager = EncryptionManager(config_path)
+        self.database_manager = DatabaseManager(db_path)
         self.password_generator = PasswordGenerator()
 
     def _current_timestamp(self) -> str:

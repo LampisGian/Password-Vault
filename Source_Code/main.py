@@ -1,6 +1,9 @@
 import tkinter as tk
+import platform
 from tkinter import ttk, filedialog
 from password_vault import PasswordVault
+import os
+import sys
 
 
 BG = "#0b1220"
@@ -19,6 +22,40 @@ BORDER = "#334155"
 INPUT_BG = "#0f172a"
 
 
+#These functions help the app configure the paths for the database and the configuration file. They ensure that the app can run 
+# both in development and as a frozen executable, and they handle the differences in file storage locations across operating 
+# systems, particularly macOS. The set_working_directory function ensures that the app's working directory is set correctly,
+#  which is important for accessing the database and configuration files without issues.
+def get_storage_paths():
+    is_frozen = getattr(sys, "frozen", False)
+    system_name = platform.system()
+
+    if is_frozen and system_name == "Darwin":
+        app_support_dir = os.path.expanduser("~/Library/Application Support/PassVault")
+        os.makedirs(app_support_dir, exist_ok=True)
+        db_path = os.path.join(app_support_dir, "vault.db")
+        config_path = os.path.join(app_support_dir, "master_config.json")
+        return db_path, config_path
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, "vault.db")
+    config_path = os.path.join(base_dir, "master_config.json")
+    return db_path, config_path
+
+def set_working_directory():
+    if getattr(sys, "frozen", False):
+        app_dir = os.path.dirname(sys.executable)
+    else:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+
+    os.chdir(app_dir)
+
+
+#This class is responsible for creating the main application window and managing the user interface. It handles user interactions, 
+# displays password entries, and provides forms for adding and editing credentials. The class also manages the overlay system for 
+# modals and notifications, ensuring a smooth user experience when performing actions like searching, adding, updating, or
+# deleting password entries. It interacts with the PasswordVault class to perform operations on the stored credentials and to manage 
+# the master password.
 class AppButton(tk.Frame):
     def __init__(self, parent, text, command, bg, hover_bg, fg="white", width=120, height=40):
         super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, bd=0)
@@ -65,7 +102,8 @@ class AppButton(tk.Frame):
 class PasswordVaultApp:
     def __init__(self, root):
         self.root = root
-        self.vault = PasswordVault()
+        db_path, config_path = get_storage_paths()
+        self.vault = PasswordVault(db_path=db_path, config_path=config_path)
         self.selected_entry_id = None
 
         self.root.title("Password Vault")
@@ -84,12 +122,17 @@ class PasswordVaultApp:
 
         self._configure_styles()
         self._build_overlay_system()
+        self._build_ui()
+
+        self.root.update_idletasks()
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
 
         if not self.setup_or_unlock_vault():
             self.root.destroy()
             return
 
-        self._build_ui()
         self.refresh_entries()
 
     def _configure_styles(self):
@@ -1071,9 +1114,12 @@ class PasswordVaultApp:
 
 
 def main():
+    set_working_directory()
+
     root = tk.Tk()
-    PasswordVaultApp(root)
-    root.mainloop()
+    app = PasswordVaultApp(root)
+    if root.winfo_exists():
+        root.mainloop()
 
 
 if __name__ == "__main__":

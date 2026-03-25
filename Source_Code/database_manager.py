@@ -2,6 +2,9 @@ import os
 import sqlite3
 from password_entry import PasswordEntry
 
+#This class is responsible for managing the SQLite database that stores the password entries. It provides methods to create the database, 
+# add , retrieve, update, and delete credentials. The database is stored in a file named "vault.db" by default, but this can be customized when 
+#initializing the DatabaseManager.
 
 class DatabaseManager:
     def __init__(self, db_name: str = "vault.db"):

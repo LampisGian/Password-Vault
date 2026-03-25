@@ -1,7 +1,11 @@
 import secrets
 import string
 
-
+#This class is responsible for generating strong, random passwords. It uses the secrets module to ensure that the generated 
+# passwords are cryptographically secure. The generate_password method creates a password of a specified length 
+# (defaulting to 12 characters) that includes a mix of lowercase letters, uppercase letters, digits, and symbols. 
+# The method ensures that the generated password contains at least one character from each category and then shuffles the characters 
+# to create a random password. The minimum length for the generated password is set to 8 characters to ensure sufficient complexity.
 class PasswordGenerator:
     def __init__(self):
         self.lowercase = string.ascii_lowercase

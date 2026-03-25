@@ -7,7 +7,11 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-
+#This class is responsible for handling all encryption and decryption operations related to the password vault. It manages the master 
+# passworda and also to all the encryption and decryption of the stored passwords. The master password is hashed and stored in a 
+# configuration file, and the encryption key is derived from the master password using PBKDF2. The class provides methods to set up 
+# the master password, unlock the vault, encrypt and decrypt passwords, change the master password, and delete the configuration when 
+# resetting the vault.
 class EncryptionManager:
     def __init__(self, config_file: str = "master_config.json"):
         self.config_file = config_file
