@@ -79,6 +79,16 @@ class EncryptionManager:
             raise ValueError("Vault is locked.")
         return self.fernet.decrypt(encrypted_password.encode()).decode()
 
+    def encrypt_text(self, text: str) -> str:
+        if self.fernet is None:
+            raise ValueError("Vault is locked.")
+        return self.fernet.encrypt(text.encode()).decode()
+
+    def decrypt_text(self, encrypted_text: str) -> str:
+        if self.fernet is None:
+            raise ValueError("Vault is locked.")
+        return self.fernet.decrypt(encrypted_text.encode()).decode()
+
     def change_master_password_config(self, new_password: str):
         if not isinstance(new_password, str) or not new_password.strip():
             raise ValueError("New master password cannot be empty.")

@@ -83,6 +83,15 @@ class PasswordVault:
 
     def retrieve_entries(self):
         rows = self.database_manager.get_all_credentials()
+        return self._rows_to_entries(rows)
+
+    def search_entries(self, query: str):
+        if not query.strip():
+            return self.retrieve_entries()
+        rows = self.database_manager.search_credentials(query.strip())
+        return self._rows_to_entries(rows)
+
+    def _rows_to_entries(self, rows):
         entries = []
 
         for row in rows:

@@ -53,6 +53,18 @@ class DatabaseManager:
             """)
             return cursor.fetchall()
 
+    def search_credentials(self, query: str):
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            like_query = f"%{query}%"
+            cursor.execute("""
+                SELECT id, name, url, username, password, notes, updated_at
+                FROM passwords
+                WHERE name LIKE ? OR url LIKE ? OR username LIKE ? OR notes LIKE ?
+                ORDER BY id
+            """, (like_query, like_query, like_query, like_query))
+            return cursor.fetchall()
+
     def get_credential_by_id(self, entry_id: int):
         with self._connect() as conn:
             cursor = conn.cursor()
